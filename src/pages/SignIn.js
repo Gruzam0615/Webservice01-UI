@@ -8,10 +8,16 @@ import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+// import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
+import { makeStyles } from '@mui/system';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+
+import { signState } from '../components/MyAtoms';
+import { useNavigate } from 'react-router-dom';
+import { useCookies } from 'react-cookie';
 
 function Copyright(props) {
   return (
@@ -29,34 +35,76 @@ function Copyright(props) {
 const defaultTheme = createTheme();
 
 export default function SignIn() {
+  const atomSignState = useRecoilValue(signState);
+  const setAtomSignState = useSetRecoilState(signState);
+  const navigate = useNavigate();
+  const [ cookies, setCookies, removeCookies ] = useCookies(["username", "Authorization"]);
+
+  const [ passwordInputVal, setPasswordInputVal ] = React.useState("");
+
+  const passwordOnChange = (event) => {
+    setPasswordInputVal(event.target.value)
+  }
+
+  React.useEffect(() => {
+    console.log("SignIn Page");
+  }, [atomSignState]);
+
+  const signInAction = async(requestData) => {
+    await fetch("http://localhost:8080/api/sign/signIn", {
+        method: "POST",      
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then((response) => response.json()) // response.json()) 
+    .then((result) => {
+      if(result.data != null) {
+        setAtomSignState({
+          "username": requestData.account,
+          "Authorization": result.data,
+          "status": true,
+          "passwordInputStatus": true
+        })
+        setCookies("username", requestData.account);
+        setCookies("Authorization", result.data);
+        navigate("/");
+      } else {
+        setAtomSignState({
+          "username": requestData.account,
+          "Authorization": null,
+          "status": false,
+          "passwordInputStatus": false
+        })
+        setPasswordInputVal("");
+        alert("인증정보가 유효하지 않습니다.");
+      }
+      // console.log("after signInAction");
+      // console.log(atomSignState);
+      // return result;
+    })
+    .catch(error => {
+      // console.log(error);
+      return error;
+    })
+    
+    
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    // console.log({
-    //   email: data.get('account'),
-    //   password: data.get('password'),
-    // });
+    console.log({
+      email: data.get('account'),
+      password: data.get('password'),
+    });
     const requestData = {
       account: data.get("account"),
       password: data.get("password")
     };
 
-    console.log(requestData);    
-  
-    await fetch("http://localhost:8080/api/sign/signIn", {
-      method: "POST",      
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-      },
-      body: JSON.stringify(requestData)
-    })
-    .then((response) => response.json()) // response.json()) 
-    .then((result) => {
-      console.log(result);
-    })
-    .catch(error => {
-      console.log(error);
-    })
+    const fetchData = signInAction(requestData);      
   };
 
   return (
@@ -72,7 +120,7 @@ export default function SignIn() {
           }}
         >
           <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-            <LockOutlinedIcon />
+            {/* <LockOutlinedIcon /> */}
           </Avatar>
           <Typography component="h1" variant="h5">
             Sign in
@@ -88,6 +136,7 @@ export default function SignIn() {
               autoComplete="account"
               autoFocus
             />
+            { atomSignState.passwordInputStatus ?          
             <TextField
               margin="normal"
               required
@@ -97,7 +146,21 @@ export default function SignIn() {
               type="password"
               id="password"
               autoComplete="current-password"
+            /> :
+            <TextField
+              error
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={passwordInputVal}
+              onChange={passwordOnChange}
             />
+            }
             {/* <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"

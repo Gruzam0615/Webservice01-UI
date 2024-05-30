@@ -6,34 +6,30 @@ import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
+// import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
+// import AdbIcon from '@mui/icons-material/Adb';
 import Link from "@mui/material/Link";
-import { atom, useRecoilState } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { signState } from "./MyAtoms";
+import { useNavigate } from "react-router-dom";
+import { useCookies } from "react-cookie";
 
 const pages = ['Products', 'Pricing', 'Blog'];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
-
-const loginState = atom({
-    key: "loginState",
-    default: {
-        status: false,
-        username: "",
-        authorization: "",
-    }
-})
+const settings = ['Profile', 'Account', 'Dashboard'];
 
 const AppAppBar = () => {
+  const currentSignState = useRecoilValue(signState);
+  const setAtomSignState = useSetRecoilState(signState);
+  const navigate = useNavigate();
+  const [ cookies, setCookies, removeCookies ] = useCookies(["username", "Authorization"]);
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
-
-  const [ loginData, setLoginData] = useRecoilState(loginState);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -50,11 +46,53 @@ const AppAppBar = () => {
     setAnchorElUser(null);
   };
 
+  const signOutAction = async(event) => {
+    event.preventDefault();
+    await fetch("http://localhost:8080/api/sign/signOut", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8",
+        "Authorization": cookies.Authorization
+      }      
+    })
+    .then((response) => response.json()) // response.json()) 
+    .then((result) => {
+      if(result.data == true) {
+        console.log("signOut Complete");
+        setAtomSignState({
+          "username": null,
+          "Authorization": null,
+          "status": false,
+          "passwordInputStatus": true
+        })
+        removeCookies("username");
+        removeCookies("Authorization");
+        navigate("/");
+      } else {
+        console.log("signOut InComplete");
+        setAtomSignState({
+          "username": null,
+          "Authorization": null,
+          "status": false,
+          "passwordInputStatus": true
+        })
+        removeCookies("username");
+        removeCookies("Authorization");
+        navigate("/");
+      }
+      return result;
+    })
+    .catch(error => {
+      // console.log(error);
+      return error;
+    })    
+  }
+
   return(
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
+          {/* <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} /> */}
           <Typography
             variant="h6"
             noWrap
@@ -82,7 +120,7 @@ const AppAppBar = () => {
               onClick={handleOpenNavMenu}
               color="inherit"
             >
-              <MenuIcon />
+              {/* <MenuIcon /> */}
             </IconButton>
             <Menu
               id="menu-appbar"
@@ -109,7 +147,7 @@ const AppAppBar = () => {
               ))}
             </Menu>
           </Box>
-          <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
+          {/* <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} /> */}
           <Typography
             variant="h5"
             noWrap
@@ -141,12 +179,12 @@ const AppAppBar = () => {
           </Box>
 
         {
-            loginData.status ?
+            cookies.Authorization != null ?
 
             <Box sx={{ flexGrow: 0 }}>
                 <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                    <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                    <Avatar alt={currentSignState.username} src="/static/images/avatar/2.jpg" />
                 </IconButton>
                 </Tooltip>
                 <Menu
@@ -170,6 +208,9 @@ const AppAppBar = () => {
                     <Typography textAlign="center">{setting}</Typography>
                     </MenuItem>
                 ))}
+                <MenuItem onClick={signOutAction}>
+                    <Typography textAlign="center">Sign Out</Typography>
+                </MenuItem>
                 </Menu>
             </Box>
 
