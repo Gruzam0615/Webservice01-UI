@@ -1,29 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
+
 import reportWebVitals from './reportWebVitals';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 import { RecoilRoot } from 'recoil';
-import SignIn from './pages/SignIn';
 import { CookiesProvider } from 'react-cookie';
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-  },
-  {
-    path: "/sign",
-    element: <SignIn />,
-  }
-]);
+import { routers } from "./Routers";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <RecoilRoot>
   <CookiesProvider>
-    <RouterProvider router={router} />
+    <RouterProvider router={routers} />
     </CookiesProvider>
   </RecoilRoot>
 );

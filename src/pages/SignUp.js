@@ -19,39 +19,31 @@ import { signState } from '../components/MyAtoms';
 import { useNavigate } from 'react-router-dom';
 import { useCookies } from 'react-cookie';
 
-function Copyright(props) {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
-
 const defaultTheme = createTheme();
 
-export default function SignIn() {
+export default function SignUp() {
   const atomSignState = useRecoilValue(signState);
   const setAtomSignState = useSetRecoilState(signState);
   const navigate = useNavigate();
   const [ cookies, setCookies, removeCookies ] = useCookies(["username", "Authorization"]);
 
   const [ passwordInputVal, setPasswordInputVal ] = React.useState("");
+  const [ passwordCheckInputVal, setPasswordCheckInputVal ] = React.useState("");
 
-  const passwordOnChange = (event) => {
-    setPasswordInputVal(event.target.value)
+  const passwordChange = (event) => {
+    setPasswordInputVal(event.target.value);
+  }
+
+  const passwordCheckChange = (event) => {
+    setPasswordCheckInputVal(event.target.value);
   }
 
   React.useEffect(() => {
     console.log("SignIn Page");
   }, [atomSignState]);
 
-  const signInAction = async(requestData) => {
-    await fetch("http://localhost:8080/api/sign/signIn", {
+  const signUpAction = async(requestData) => {
+    await fetch("http://localhost:8080/api/sign/signUp", {
         method: "POST",      
         headers: {
           "Content-Type": "application/json; charset=UTF-8",
@@ -60,29 +52,13 @@ export default function SignIn() {
     })
     .then((response) => response.json()) // response.json()) 
     .then((result) => {
-      if(result.data != null) {
-        setAtomSignState({
-          "username": requestData.account,
-          "Authorization": result.data,
-          "status": true,
-          "passwordInputStatus": true
-        })
-        setCookies("username", requestData.account);
-        setCookies("Authorization", result.data);
-        navigate("/");
+      if(result.data === true) {
+        alert("회원가입 완료");
+        navigate("/signIn");
       } else {
-        setAtomSignState({
-          "username": requestData.account,
-          "Authorization": null,
-          "status": false,
-          "passwordInputStatus": false
-        })
-        setPasswordInputVal("");
-        alert("인증정보가 유효하지 않습니다.");
+        alert("회원가입 실패 다시 시도해주세요");
+        navigate(0);
       }
-      // console.log("after signInAction");
-      // console.log(atomSignState);
-      // return result;
     })
     .catch(error => {
       // console.log(error);
@@ -95,16 +71,13 @@ export default function SignIn() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('account'),
-      password: data.get('password'),
-    });
+    
     const requestData = {
       account: data.get("account"),
       password: data.get("password")
     };
 
-    const fetchData = signInAction(requestData);      
+    signUpAction(requestData);      
   };
 
   return (
@@ -119,11 +92,8 @@ export default function SignIn() {
             alignItems: 'center',
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-            {/* <LockOutlinedIcon /> */}
-          </Avatar>
           <Typography component="h1" variant="h5">
-            Sign in
+            Sign up
           </Typography>
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
             <TextField
@@ -135,59 +105,56 @@ export default function SignIn() {
               name="account"
               autoComplete="account"
               autoFocus
+            />        
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              onChange={passwordChange}
             />
-            { atomSignState.passwordInputStatus ?          
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-            /> :
-            <TextField
-              error
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={passwordInputVal}
-              onChange={passwordOnChange}
+            {
+              passwordInputVal == passwordCheckInputVal ?
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="passwordCheck"
+                label="PasswordCheck"
+                type="password"
+                id="passwordCheck"
+                autoComplete="current-password-check"
+                onChange={passwordCheckChange}
+              />
+              :
+              <TextField
+                error
+                margin="normal"
+                required
+                fullWidth
+                name="passwordCheck"
+                label="PasswordCheck"
+                type="password"
+                id="passwordCheck"
+                autoComplete="current-password-check"
+                onChange={passwordCheckChange}
             />
             }
-            {/* <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
-            /> */}
+            
             <Button
               type="submit"
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
             >
-              Sign In
+              Sign Up
             </Button>
-            <Grid container>
-              {/* <Grid item xs>
-                <Link href="#" variant="body2">
-                  Forgot password?
-                </Link>
-              </Grid> */}
-              <Grid item>
-                <Link href="/signUp" variant="body2">
-                  {"Don't have an account? Sign Up"}
-                </Link>
-              </Grid>
-            </Grid>
           </Box>
         </Box>
-        {/* <Copyright sx={{ mt: 8, mb: 4 }} /> */}
       </Container>
     </ThemeProvider>
   );
