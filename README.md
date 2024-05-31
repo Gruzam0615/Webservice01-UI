@@ -3,7 +3,7 @@ https://github.com/Gruzam0615/webservice01_backend
 위의 링크의 UI 프로젝트로 React 를 사용하여 제작  
 
 #### 사용한 모듈
-- react
+- react(js)
 - react-router-v6
 - recoil
 - react-cookie
