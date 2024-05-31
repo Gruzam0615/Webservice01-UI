@@ -15,4 +15,4 @@ https://github.com/Gruzam0615/webservice01_backend
 
 
 #### 기능
-- 로그인, 로그아웃
+- 회원가입, 로그인, 로그아웃
